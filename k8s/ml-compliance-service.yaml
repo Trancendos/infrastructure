@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-compliance-service
+  labels:
+    app: ml-compliance-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ml-compliance-service
+  template:
+    metadata:
+      labels:
+        app: ml-compliance-service
+    spec:
+      containers:
+        - name: ml-compliance-service
+          image: trancendos/ml-compliance-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-compliance-service
+spec:
+  selector:
+    app: ml-compliance-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
